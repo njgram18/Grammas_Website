@@ -1,0 +1,105 @@
+---
+title: "Boston General Analysis"
+author: "Nick Grammas"
+date: 2020-12-01T21:13:14-05:00
+categories: ["R"]
+tags: ["R Markdown", "plot", "regression"]
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<p>Introduction:</p>
+<p>In this section of the analysis I compared all of the property types that were in the data set with each other. I looked at the mean price, rent, and return on investment for each of the three types of properties in Boston. Additionally, I created plots for each of these three categories with the variation in the prices. This allows viewers to have a better understanding of the data and what exactly is happening with home values in the Boston area.</p>
+<pre class="r"><code>boston_general &lt;- boston_MA_df %&gt;%
+  mutate(avg_price = sum(price) / 780) %&gt;%
+  mutate(projected_rental_income = living_space * 4.50) %&gt;%
+  mutate(down_payment = price * .20) %&gt;%
+  mutate(principal = price - down_payment) %&gt;%
+  mutate(projected_mortgage_payment = ((principal/330) * 1.042)) %&gt;%
+  mutate(projected_mortgage_yr = projected_mortgage_payment * 12) %&gt;%
+  mutate(projected_rental_income_yr = (projected_rental_income * 12)) %&gt;%
+  mutate(ROI = (projected_rental_income_yr - projected_mortgage_yr) / projected_mortgage_yr)</code></pre>
+<p>Sale Price Analysis:</p>
+<p>In this section I look at the mean price for condos, single family, and multifamily homes in Boston. Additionally, there is another plot showing the distribution of home prices.</p>
+<pre class="r"><code>boston_general_price &lt;- boston_general %&gt;%
+  filter(property_type == &quot;CONDO&quot; |
+           property_type == &quot;SINGLE_FAMILY&quot; |
+           property_type == &quot;MULTI_FAMILY&quot;) %&gt;%
+  group_by(property_type) %&gt;%
+  summarise(mean_price = mean(price),
+            sd_price = sd(price),
+            n_properties = n()) %&gt;%
+    mutate(l_se = mean_price - sd_price / sqrt(n_properties),
+         u_se = mean_price + sd_price / sqrt(n_properties)) %&gt;%
+  mutate(type = fct_reorder(property_type, mean_price))
+boston_general_price</code></pre>
+<pre><code>## # A tibble: 3 × 7
+##   property_type mean_price sd_price n_properties     l_se     u_se type         
+##   &lt;chr&gt;              &lt;dbl&gt;    &lt;dbl&gt;        &lt;int&gt;    &lt;dbl&gt;    &lt;dbl&gt; &lt;fct&gt;        
+## 1 CONDO           1780159. 1859497.          677 1708693. 1851625. CONDO        
+## 2 MULTI_FAMILY    3042212. 2343776.           39 2666908. 3417517. MULTI_FAMILY 
+## 3 SINGLE_FAMILY   3564582. 3572621.           51 3064315. 4064849. SINGLE_FAMILY</code></pre>
+<pre class="r"><code>ggplot(data = boston_general_price, aes(x = property_type, y = mean_price, color = property_type, fill = property_type)) + 
+  geom_col() +
+  coord_flip()</code></pre>
+<p><img src="/post/Boston_General_Analysis/Boston_General_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<p>The results show that single family homes have the highest mean prices in Boston. This may not come as a surprise because single family homes can be much harder to find in a city environment. That being said, the lack of supply helps to increase the mean prices of these homes. Multifamily homes are the next highest mean price. There are definitely more of these types of properties available in Boston, but they are investment opportunities because they provide income. This can increase the price of the homes depending on the numbers behind the deal. Finally, condos have the smallest mean price. These are much more fitting for a city and those that own a condo tend to not own the entire building, therefore it may make some sense for them to be cheaper in general.</p>
+<pre class="r"><code>ggplot(data = boston_general_price, aes(x = property_type, y = mean_price, color = property_type)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = l_se, ymax = u_se)) +
+  coord_flip()</code></pre>
+<p><img src="/post/Boston_General_Analysis/Boston_General_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p>This plot shows that single family homes have the most variability in price. Understanding the city is very important in understanding this variability, and Boston certainly has good neighborhoods and bad. This could contribute to this variability, as well as the size of these homes. Multifamily homes also have a lot of variability in their prices. This seems to make sense because, as mentioned earlier, a lot of these homes are being bought by investors. Therefore, if these properties are good investments the price of them will probably be higher, and bad investments may have a significant price cut. Finally, condos have the least variability in Boston.</p>
+<p>Rent Analysis:</p>
+<p>In this section, I will analysis the average rents for each property type in the Boston market and look at the variability of these rents as well.</p>
+<pre class="r"><code>boston_general_rent &lt;- boston_general %&gt;%
+  filter(property_type == &quot;CONDO&quot; |
+           property_type == &quot;SINGLE_FAMILY&quot; |
+           property_type == &quot;MULTI_FAMILY&quot;) %&gt;%
+  group_by(property_type) %&gt;%
+  summarise(mean_rent = mean(projected_rental_income_yr),
+            sd_rent = sd(projected_rental_income_yr),
+            n_properties = n()) %&gt;%
+    mutate(l_se = mean_rent - sd_rent / sqrt(n_properties),
+         u_se = mean_rent + sd_rent / sqrt(n_properties)) %&gt;%
+  mutate(type = fct_reorder(.f = property_type, .x = mean_rent))
+
+ggplot(data = boston_general_rent, aes(x = type, y = mean_rent, color = property_type, fill = property_type)) + 
+  geom_col() +
+  coord_flip()</code></pre>
+<p><img src="/post/Boston_General_Analysis/Boston_General_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>As you can see from this plot, the average rent price is highest for multifamily properties. This may not be surprising because these are typically the homes that are rented out more frequently in the city. Additionally, single family and condo properties have much lower mean rent values. This also may not be a surprise because these homes tend to be owned and lived in by the owners at a much higher rate than multifamily homes in Boston.</p>
+<pre class="r"><code>ggplot(data = boston_general_rent, aes(x = type, y = mean_rent, color = property_type)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = l_se, ymax = u_se)) +
+  coord_flip()</code></pre>
+<p><img src="/post/Boston_General_Analysis/Boston_General_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>The variability in this plot shows that multifamily homes have the most variability in their rents. This could be due to the fact that there are many rental properties in many different locations with the city of Boston. Single family homes have the second highest variability, and condos have very little variability making them the most consistent to the mean.</p>
+<p>Return on Investment Analysis:</p>
+<p>In this section, I will dive into the ROI of Boston properties. This may be the most important section for those looking to invest in the Boston market because it is a measure of the return that comes from investing in these properties. Similar to the previous sections there are two plots displaying the average ROI and the variability of the ROI’s based on the property type.</p>
+<pre class="r"><code>boston_general_roi &lt;- boston_general %&gt;%
+  filter(property_type == &quot;CONDO&quot; |
+           property_type == &quot;SINGLE_FAMILY&quot; |
+           property_type == &quot;MULTI_FAMILY&quot;) %&gt;%
+  group_by(property_type) %&gt;%
+  summarise(mean_ROI = mean(ROI),
+            sd_ROI = sd(ROI),
+            n_properties = n()) %&gt;%
+    mutate(l_se = mean_ROI - sd_ROI / sqrt(n_properties),
+         u_se = mean_ROI + sd_ROI / sqrt(n_properties)) %&gt;%
+  mutate(type = fct_reorder(property_type, mean_ROI))
+
+ggplot(data = boston_general_roi, aes(x = type, y = mean_ROI, color = property_type, fill = property_type)) + 
+  geom_col() +
+  coord_flip()</code></pre>
+<p><img src="/post/Boston_General_Analysis/Boston_General_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p>Multifamily homes have the best mean ROI compared to single family and condo properties. This is probably due to the fact that multifamily homes tend to be investment homes where passive income can be created. The other two property types tend to be family homes that are still investments, but their returns lie more heavily on the appreciation and capital that is built up throughout the duration of the mortgage.</p>
+<pre class="r"><code>ggplot(data = boston_general_roi, aes(x = type, y = mean_ROI, color = property_type, fill = property_type)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = l_se, ymax = u_se)) +
+  coord_flip()</code></pre>
+<p><img src="/post/Boston_General_Analysis/Boston_General_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p>In this plot we can see that the range of the ROI for multifamily homes is much greater than the other two types of properties. Once again, this is probably due to the variation of multifamily homes on the market, and the different neighborhoods that make up Boston. Additionally, the variability of ROI for single families and condos are quite small. An explanation for this is that these types of properties tend to not be rented at the same rate as multifamily, but are rather permanent residences.</p>
+<p>Conclusion:</p>
+<p>Based off of the analysis in this section, it seems that from an investors prospective multifamily homes are a better investment. Although there is much more variability in all three of areas looked at, the return on investment is much stronger and has the potential to make more money. That being said, single family homes tend to cost much more in Boston, and do not return the same amount. Finally, condos tend to be the cheapest type of property available in the Boston market, but also produce the smallest income for rents and returns.</p>

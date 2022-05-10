@@ -1,0 +1,23 @@
+---
+title: "Boston General Analysis"
+author: "Nick Grammas"
+date: 2020-12-01T21:13:14-05:00
+categories: ["R"]
+tags: ["R Markdown", "plot", "regression"]
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(here)
+boston_original_df <- read_csv(here("Data/zillow-boston.csv"))
+##view(boston_original_df)
+boston_MA_df <- boston_original_df %>% filter(rstate == "MA")
+boston_MA_df <- boston_MA_df %>% arrange(desc(price))
+##view(boston_MA_df)
+boston_MA_df
+```

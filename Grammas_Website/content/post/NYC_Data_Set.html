@@ -1,0 +1,36 @@
+---
+title: "New York City Data Set"
+output: html_document
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<pre class="r"><code>library(tidyverse)</code></pre>
+<pre><code>## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──</code></pre>
+<pre><code>## ✓ ggplot2 3.3.5     ✓ purrr   0.3.4
+## ✓ tibble  3.1.5     ✓ dplyr   1.0.7
+## ✓ tidyr   1.1.4     ✓ stringr 1.4.0
+## ✓ readr   2.0.2     ✓ forcats 0.5.1</code></pre>
+<pre><code>## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()</code></pre>
+<pre class="r"><code>library(here)</code></pre>
+<pre><code>## here() starts at /Users/nickgrammas/Desktop/website_setup/Grammas_Website</code></pre>
+<pre class="r"><code>nyc_properties &lt;- read_csv(here(&quot;Data/NYC_property_sales.csv&quot;))</code></pre>
+<pre><code>## Rows: 38177 Columns: 20</code></pre>
+<pre><code>## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr   (8): borough, neighborhood, building_class_category, tax_class_at_pres...
+## dbl  (11): block, lot, zip_code, residential_units, commercial_units, total_...
+## dttm  (1): sale_date</code></pre>
+<pre><code>## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>view(nyc_properties)</code></pre>
+<p><a href="https://data.world/dataquest/nyc-property-sales-data" class="uri">https://data.world/dataquest/nyc-property-sales-data</a></p>
+<p>##average rent site
+<a href="https://www.zumper.com/rent-research/new-york-ny" class="uri">https://www.zumper.com/rent-research/new-york-ny</a></p>
+<p>Based on this website the average rent for NYC is $3,436.2</p>
+<p><a href="https://www.zumper.com/blog/nyc-by-square-foot-see-which-neighborhood-gets-you-the-most-space-for-your-money/" class="uri">https://www.zumper.com/blog/nyc-by-square-foot-see-which-neighborhood-gets-you-the-most-space-for-your-money/</a></p>
+<p>Average rent per square foot = $3.02</p>

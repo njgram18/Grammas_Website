@@ -1,0 +1,89 @@
+---
+title: "Staten Island Analysis"
+author: "Nick Grammas"
+date: 2020-12-01T21:13:14-05:00
+categories: ["R"]
+tags: ["R Markdown", "plot", "regression"]
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Introduction:
+
+In this section I look at the borough Staten Island. In this analysis I have created plots that look at square feet vs price, down return vs sale price, sale price vs projected rental income, and projected mortgage payments vs ROI. 
+
+```{r echo=FALSE, message=FALSE, results = 'hide'}
+library(tidyverse)
+library(here)
+nyc_properties <- read_csv(here("Data/NYC_property_sales.csv"))
+staten_island_properties <- nyc_properties %>% filter(borough == "Staten Island")
+```
+
+```{r}
+staten_island_analysis <- staten_island_properties %>%
+  mutate(avg_price = sum(sale_price) / 4837) %>%
+  mutate(projected_rental_income = gross_square_feet * 0.87) %>%
+  mutate(down_payment = sale_price * .20) %>%
+  mutate(principal = sale_price - down_payment) %>%
+  mutate(projected_mortgage_payment = ((principal/330) * 1.042)) %>%
+  mutate(projected_mortgage_yr = projected_mortgage_payment * 12) %>%
+  mutate(projected_rental_income_yr = (projected_rental_income * 12)) %>%
+  mutate(ROI = (projected_rental_income_yr - projected_mortgage_yr) / projected_mortgage_yr) %>%
+  mutate(down_return = projected_rental_income_yr / down_payment * 100)
+
+```
+```{r echo=FALSE, message=FALSE, results = 'hide'}
+library(plotly)
+```
+
+Square Feet Vs Price:
+
+```{r}
+plot1 <- ggplot(data = staten_island_analysis, aes(x = gross_square_feet, y = sale_price, 
+                                               label = address)) +
+  geom_point() +
+  geom_smooth()
+
+ggplotly(plot1, tooltip = 'label')
+```
+
+You can see in this plot that many of the points are clustered near the bottom left of the plot. The interactive features in this plot let you zoom in closer to get a closer look at the points/properties that are down in that area. That being said, there are a couple outliers in this plot that that are large buildings with high prices. However, most of the properties in this borough seem to be under $5 million and under 30,000 sqft. In this area the trend still seems to be that as square footage increases the price of the property tends to increase as well.
+
+Down Return Vs Price:
+
+```{r}
+plot2 <- ggplot(data = staten_island_analysis, aes(x = down_return, y = sale_price, 
+                                               label = address)) +
+  geom_point() +
+  geom_smooth()
+
+ggplotly(plot2, tooltip = 'label')
+```
+
+Despite the odd shape to the trend line in this plot, there seems like there are many properties in this borough that have very high down return rates. Similar to condos in the Boston analysis, this borough could be good place for an investor to begin to scale their portfolio because they rate at which they get their down payment back is very high. Also, the properties in which the down return rates are high tend to not have a massive price either which could be even better for an investor in this position. 
+
+Sale Price Vs Projected Rental Income:
+
+```{r}
+plot3 <- ggplot(data = staten_island_analysis, aes(x = sale_price, y = projected_rental_income_yr, 
+                                               label = address)) +
+  geom_point() +
+  geom_smooth()
+ggplotly(plot3, tooltip = 'label')
+```
+
+In this plot we can see that once again many of the properties lie in the lower left quadrant of the plot. The trend line shows that as sale price increase the projected rental income tends to increase. Once again, the projected rental income is based off of the rent per square foot of the property. Therefore, the properties that fall well below this the trend line could be smaller properties and have a lot more value then this plot portrays them to have. 
+
+Projected Mortgage Payments Vs. ROI:
+
+```{r}
+plot4 <- ggplot(data = staten_island_analysis, aes(x = projected_mortgage_yr, y = ROI, 
+                                               label = address)) +
+  geom_point() +
+  geom_smooth()
+ggplotly(plot4, tooltip = 'label') 
+```
+
+This plot shows that there are many properties in this borough that do not have very high returns. This many not come as a surprise because in the general analysis section State Island had the lowest mean ROI of any other borough. That being said, there are a few properties in on this plot that have relatively low mortgage payments for the year and returns around 15 to 20%, which is a really good return for a real estate investor. 

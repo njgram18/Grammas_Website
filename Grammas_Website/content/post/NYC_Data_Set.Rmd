@@ -1,0 +1,28 @@
+---
+title: "New York City Data Set"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(here)
+nyc_properties <- read_csv(here("Data/NYC_property_sales.csv"))
+view(nyc_properties)
+
+
+```
+https://data.world/dataquest/nyc-property-sales-data
+
+##average rent site
+https://www.zumper.com/rent-research/new-york-ny
+
+Based on this website the average rent for NYC is $3,436.2
+
+https://www.zumper.com/blog/nyc-by-square-foot-see-which-neighborhood-gets-you-the-most-space-for-your-money/
+
+Average rent per square foot = $3.02
+

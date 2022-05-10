@@ -1,0 +1,74 @@
+---
+title: "Boston Interactive Property Map"
+author: "Nick Grammas"
+date: 2020-12-01T21:13:14-05:00
+categories: ["R"]
+tags: ["R Markdown", "plot", "regression"]
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Interactive Property Map
+
+This section allows the users of this website to identify the locations of properties in the city of Boston. Its purpose is to allow users to see the properties available and provide them with brief information about the property. When a user hovers over a property, information on the address, price, and property type displays allowing them to find properties of interest. Additionally, with the interactive features of some of the other sections on this website, if a user finds a property through analysis that interests them, they can come back to this section to see where the property is located. 
+
+```{r echo=FALSE, message=FALSE}
+library(tidyverse)
+library(usdata)
+library(maps)
+state_stats
+state_df <- ggplot2::map_data("state")
+mass <- state_df %>% filter(region == "massachusetts")
+
+
+library(devtools)
+library(tidyverse)
+library(uszipcodes)
+library(maps)
+library(leaflet)
+
+## install.packages("devtools")
+library(devtools)
+#> Loading required package: usethis
+## devtools::install_github("li-wen-li/uszipcodes")
+library(uszipcodes)
+library(here)
+
+properties <- read_csv(here("Data/zillow-boston.csv"))
+properties <- properties %>% filter(rstate == "MA")
+raw_zip <- uszipcodes::get_zip(properties$address)
+properties$Zip <- as.integer(uszipcodes::clean_zip(raw_zip))
+#> Warning: NAs introduced by coercion
+
+## only keep zip, lat, and long
+zip_tab <- zip_table %>% dplyr::select(Zip, Latitude, Longitude)
+property_location <- inner_join(properties, zip_tab)
+
+uscities <- maps::us.cities
+
+boston <- uscities %>% filter(name == "Boston MA")
+##view(boston)
+
+
+content <- boston %>%
+  mutate(popup = paste0(name))
+
+properties$label <- paste("Address", properties$address, ",",
+                               "Price", properties$price, ",",
+                               "Property Type", properties$property_type, ",") %>%
+  lapply(htmltools :: HTML)
+
+boston_map <- leaflet(boston) %>%
+  setView(lng = -71.02, lat = 42.34, zoom = 5) %>% 
+  addTiles() %>% 
+  addProviderTiles(providers$Wikimedia) %>% 
+    addMarkers(lng = properties$longitude, lat = properties$latitude,
+             clusterOptions = markerClusterOptions(),
+             popup = content$popup,
+             label = as.character(properties$label))
+
+boston_map
+
+```
+

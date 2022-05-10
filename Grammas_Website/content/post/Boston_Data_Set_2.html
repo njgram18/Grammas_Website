@@ -1,0 +1,58 @@
+---
+title: "Boston_data_set_2"
+output: html_document
+---
+
+<script src="/rmarkdown-libs/header-attrs/header-attrs.js"></script>
+
+
+<pre class="r"><code>library(tidyverse)</code></pre>
+<pre><code>## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──</code></pre>
+<pre><code>## ✓ ggplot2 3.3.5     ✓ purrr   0.3.4
+## ✓ tibble  3.1.5     ✓ dplyr   1.0.7
+## ✓ tidyr   1.1.4     ✓ stringr 1.4.0
+## ✓ readr   2.0.2     ✓ forcats 0.5.1</code></pre>
+<pre><code>## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()</code></pre>
+<pre class="r"><code>library(here)</code></pre>
+<pre><code>## here() starts at /Users/nickgrammas/Desktop/website_setup/Grammas_Website</code></pre>
+<pre class="r"><code>boston_original_df &lt;- read_csv(here(&quot;Data/zillow-boston.csv&quot;))</code></pre>
+<pre><code>## Rows: 836 Columns: 20</code></pre>
+<pre><code>## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr   (8): address, street_name, city, rstate, postcode, property_type, prop...
+## dbl  (11): property_id, latitude, longitude, price, zestimate, bedroom_numbe...
+## dttm  (1): RunDate</code></pre>
+<pre><code>## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>##view(boston_original_df)
+boston_MA_df &lt;- boston_original_df %&gt;% filter(rstate == &quot;MA&quot;)
+boston_MA_df &lt;- boston_MA_df %&gt;% arrange(desc(price))
+##view(boston_MA_df)</code></pre>
+<p>##Creation of new variables</p>
+<p>###Cap rate data for boston
+<a href="https://blogs.umass.edu/kmfay/2022/02/21/quincy-ma-average-property-noi/" class="uri">https://blogs.umass.edu/kmfay/2022/02/21/quincy-ma-average-property-noi/</a>
+according to this blog from Umass Boston the average NOI for Boston homes is $6,915</p>
+<pre class="r"><code>boston_add_df &lt;- boston_MA_df %&gt;% mutate(cap_rate = 6915/price) %&gt;%
+  filter(!is.na(bedroom_number)) %&gt;% mutate(price_per_bedroom = price/bedroom_number)
+boston_add_df</code></pre>
+<pre><code>## # A tibble: 766 × 22
+##    property_id address     street_name  city  rstate latitude longitude postcode
+##          &lt;dbl&gt; &lt;chr&gt;       &lt;chr&gt;        &lt;chr&gt; &lt;chr&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;chr&gt;   
+##  1    59166243 30 Chestnu… Chestnut St  Bost… MA         42.4     -71.1 02108   
+##  2  2107626553 63 Mount V… Mount Verno… Bost… MA         42.4     -71.1 02108   
+##  3    59166308 17 Louisbu… Louisburg Sq Bost… MA         42.4     -71.1 02108   
+##  4  2117794141 318 Beacon… Beacon St    Bost… MA         42.4     -71.1 02116   
+##  5   333605731 1 Dalton S… Dalton St #… Bost… MA         42.3     -71.1 02115   
+##  6    90141410 776 Boylst… Boylston St… Bost… MA         42.3     -71.1 02199   
+##  7    59163970 10 Rowes W… Rowes Wharf… Bost… MA         42.4     -71.1 02110   
+##  8    90141331 776 Boylst… Boylston St… Bost… MA         42.3     -71.1 02199   
+##  9    61319917 2 Avery St… Avery St AP… Bost… MA         42.4     -71.1 02111   
+## 10  2075168741 2 Avery St… Avery St AP… Bost… MA         NA        NA   02111   
+## # … with 756 more rows, and 14 more variables: price &lt;dbl&gt;, zestimate &lt;dbl&gt;,
+## #   bedroom_number &lt;dbl&gt;, bathroom_number &lt;dbl&gt;, price_per_unit &lt;dbl&gt;,
+## #   living_space &lt;dbl&gt;, land_space &lt;dbl&gt;, property_type &lt;chr&gt;,
+## #   property_status &lt;chr&gt;, agency_name &lt;chr&gt;, zillow_owned &lt;dbl&gt;,
+## #   RunDate &lt;dttm&gt;, cap_rate &lt;dbl&gt;, price_per_bedroom &lt;dbl&gt;</code></pre>

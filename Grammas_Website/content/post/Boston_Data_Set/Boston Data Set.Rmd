@@ -1,0 +1,39 @@
+---
+title: "Boston Data Set"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+library(here)
+boston_original_df <- read_csv(here("Data/zillow-boston.csv"))
+##view(boston_original_df)
+boston_MA_df <- boston_original_df %>% filter(rstate == "MA")
+boston_MA_df <- boston_MA_df %>% arrange(desc(price))
+##view(boston_MA_df)
+```
+
+##Creation of new variables
+
+###Cap rate data for boston
+https://blogs.umass.edu/kmfay/2022/02/21/quincy-ma-average-property-noi/
+according to this blog from Umass Boston the average NOI for Boston homes is $6,915
+
+```{r}
+boston_add_df <- boston_MA_df %>% mutate(cap_rate = 6915/price) %>%
+  filter(!is.na(bedroom_number)) %>% mutate(price_per_bedroom = price/bedroom_number)
+boston_add_df
+```
+
+
+```{r}
+ggplot(data = boston_add_df, aes(x = bedroom_number, y = price)) +
+  geom_col() +
+  facet_wrap( ~ property_type)
+```
+
+

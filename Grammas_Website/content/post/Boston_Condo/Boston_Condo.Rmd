@@ -1,0 +1,113 @@
+---
+title: "Boston Condo Analysis"
+author: "Nick Grammas"
+date: 2020-12-01T21:13:14-05:00
+categories: ["R"]
+tags: ["R Markdown", "plot", "regression"]
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Introduction:
+
+In this section I look at the condo properties for sale in Boston. Through this analysis I created plots to determine properties of good value by analyzing living space vs. price, price and projected rental income, projected mortgage payment and ROI, and price and down return. Through this analysis I hope users are able to determine properties that interest them. 
+
+
+```{r echo=FALSE, message=FALSE, results = 'hide'}
+library(tidyverse)
+library(here)
+boston_original_df <- read_csv(here("Data/zillow-boston.csv"))
+##view(boston_original_df)
+boston_MA_df <- boston_original_df %>% filter(rstate == "MA")
+boston_MA_df <- boston_MA_df %>% arrange(desc(price))
+##view(boston_MA_df)
+```
+
+```{r}
+boston_add_df <- boston_MA_df %>% mutate(cap_rate = 6915/price) %>%
+  filter(!is.na(bedroom_number)) %>% mutate(price_per_bedroom = price/bedroom_number)
+```
+
+```{r}
+boston_condo <- boston_add_df %>% filter(property_type == "CONDO") %>%
+  mutate(avg_price = sum(price) / 38) %>%
+  mutate(projected_rental_income = living_space * 4.50) %>%
+  mutate(down_payment = price * .20) %>%
+  mutate(principal = price - down_payment) %>%
+  mutate(projected_mortgage_payment = ((principal/330) * 1.042)) %>%
+  mutate(projected_mortgage_yr = projected_mortgage_payment * 12) %>%
+  mutate(projected_rental_income_yr = (projected_rental_income * 12)) %>%
+  mutate(ROI = (projected_rental_income_yr - projected_mortgage_yr) / projected_mortgage_yr) %>%
+  mutate(down_return = projected_rental_income_yr / down_payment * 100)
+```
+
+Living Space Vs Price:
+
+```{r echo=FALSE, message=FALSE, results = 'hide'}
+library(plotly)
+```
+```{r}
+plot1 <- ggplot(data = boston_condo, aes(x = living_space, y = price, 
+                                               label = address)) +
+  geom_point() +
+  geom_smooth()
+
+ggplotly(plot1, tooltip = 'label')
+```
+
+Similar to the other types of properties that have been analyzed in this the Boston data set, as the living space of condos increases the price of these condos tends to increase with it. However, unlike the other types of properties in this data set, it is clear that there are many more condos available in the city. This may not come as a surprise because that tends to be more like city living. A cool feature of these interactive plots is that you can zoom in on the plots to get a better view of some of the points that may be close together like in this plot. That being said, much of the data points in this plot are clustered under 2000 sqft of living space so the zoom feature is nice for taking a closer look at those areas.
+
+Price Vs Projected Rental Income:
+
+```{r}
+plot2 <- ggplot(data = boston_condo, aes(x = price, y = projected_rental_income, 
+                                               label = address)) +
+  geom_point() +
+  geom_smooth()
+ggplotly(plot2, tooltip = 'label')
+```
+
+In this plot we can see that as the price of the condos increases the projected rental income tends to increase as well. That being said, there is once again many points clustered on near the lower left part of the graph. This could possibly be due to the fact that the projected rental income variable I created was based on the living space of the properties. That being said, there does seem to be some properties that could rent for a good rate considering their price. 
+
+Projected Mortgage Payment Vs ROI:
+
+```{r}
+plot3 <- ggplot(data = boston_condo, aes(x = projected_mortgage_yr, y = ROI, 
+                                               label = address)) +
+  geom_point() +
+  geom_smooth()
+ggplotly(plot3, tooltip = 'label') 
+```
+
+This plot shows that as the mortgage rates increase, the ROI of these properties tends to decrease even with some properties dipping into sub zero ROI's. That being said, there are many homes with relatively low mortgage costs that bring in pretty good returns on the market some just under 6% ROI. Those could be really good deals for investors. 
+
+Price Vs. Down Return:
+
+```{r}
+plot4 <- ggplot(data = boston_condo, aes(x = price, y = down_return, 
+                                               label = address)) +
+  geom_point() +
+  geom_smooth()
+ggplotly(plot4, tooltip = 'label')
+```
+
+In this plot we see that as the price increases, the down return rate tends to decrease. That being said, a good down return rate is anywhere between 20-25% and this plot shows that there are plenty of properties that can get your down payment back really quickly. For someone looking to scale their real estate investment portfolio, Boston condos could be the real estate investment they need to add. 
+
+Investment Average Statistics:
+
+```{r}
+library(pander)
+boston_condo_table <- boston_condo %>% 
+  select(price, down_payment, projected_mortgage_yr, projected_rental_income_yr, ROI) %>%
+  summarise(meanprice = mean(price),
+            mean_down_payment = mean(down_payment),
+            mean_mortgage = mean(projected_mortgage_yr),
+            mean_rent_income = mean(projected_rental_income_yr),
+            mean_ROI = mean(ROI))
+
+pander(boston_condo_table)
+```
+
+This table shows that the mean price for condos is fairly cheap compared to the other property types available in the Boston area. That being said, the mean ROI is lower as well. However, the more risk an investor is willing to take means the more returns that they are expecting to return. That being said, for someone looking to make smaller, less riskier investments, condos may be a good addition to their investment portfolios. 

@@ -1,0 +1,102 @@
+---
+title: "Boston Single Family Analysis"
+author: "Nick Grammas"
+date: 2020-12-01T21:13:14-05:00
+categories: ["R"]
+tags: ["R Markdown", "plot", "regression"]
+---
+
+```{r echo=FALSE, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Introduction:
+
+In this section I analyze the single family properties for sale in Boston. I look at the price vs living space, price vs projected rental income, and the price vs the down return rate on these properties. Additionally, I provide some summary statistics on for single family homes in this city.
+
+```{r echo=FALSE, message=FALSE, results = 'hide'}
+library(tidyverse)
+library(here)
+boston_original_df <- read_csv(here("Data/zillow-boston.csv"))
+##view(boston_original_df)
+boston_MA_df <- boston_original_df %>% filter(rstate == "MA")
+boston_MA_df <- boston_MA_df %>% arrange(desc(price))
+##view(boston_MA_df)
+```
+```{r}
+boston_add_df <- boston_MA_df %>% mutate(cap_rate = 6915/price) %>%
+  filter(!is.na(bedroom_number)) %>% mutate(price_per_bedroom = price/bedroom_number)
+```
+```{r}
+boston_single <- boston_add_df %>% filter(property_type == "SINGLE_FAMILY") %>%
+  mutate(avg_price = sum(price) / 38) %>%
+  mutate(projected_rental_income = living_space * 4.50) %>%
+  mutate(down_payment = price * .20) %>%
+  mutate(principal = price - down_payment) %>%
+  mutate(projected_mortgage_payment = ((principal/330) * 1.042)) %>%
+  mutate(projected_mortgage_yr = projected_mortgage_payment * 12) %>%
+  mutate(projected_rental_income_yr = (projected_rental_income * 12)) %>%
+  mutate(ROI = (projected_rental_income_yr - projected_mortgage_yr) / projected_mortgage_yr)
+
+
+```
+
+Living Space vs Price:
+
+```{r echo=FALSE, message=FALSE, results = 'hide'}
+library(plotly)
+```
+```{r}
+plot1 <- ggplot(data = boston_single, aes(x = living_space, y = price, 
+                                               label = address)) +
+  geom_point() +
+  geom_smooth()
+
+ggplotly(plot1, tooltip = 'label')
+```
+
+As you can see from the plot, as living space increases the price of single family homes tends to increase as well. Additionally, we can see that single family homes with large amounts of living space in Boston sell for extremely high prices. This is probably due to the fact that homes of this size in any city can be difficult to find. 
+
+Price vs Projected Rental Income:
+
+```{r}
+plot2 <- ggplot(data = boston_single, aes(x = price, y = projected_rental_income, 
+                                               label = address)) +
+  geom_point() +
+  geom_smooth()
+ggplotly(plot2, tooltip = 'label')
+```
+
+From this plot you can see that as the price of a single family home increases the projected rental income tends to increase as well. However, it seems like the trend begins to flatten out as you approach as you reach the more expensive single family homes in the city. 
+
+Projected Mortgage vs ROI:
+
+```{r}
+plot3 <- ggplot(data = boston_single, aes(x = projected_mortgage_yr, y = ROI, 
+                                               label = address)) +
+  geom_point() +
+  geom_smooth()
+ggplotly(plot3, tooltip = 'label')
+```
+
+This plot shows that as the mortgage costs increase the ROI of single family homes tends to decrease. In fact, in some of the larger mortgages (which are associated for higher priced single family homes) there are even negative returns on investments. This may be a reason as to why most single family homes are used for personal families as a primary residence and are not bought as an investment to be rented out at a later date. 
+
+Single Family Homes Summary Statistics:
+
+```{r echo=FALSE, message=FALSE, results = 'hide'}
+library(pander)
+```
+```{r}
+boston_single_table <- boston_single %>% 
+  select(price, down_payment, projected_mortgage_yr, projected_rental_income_yr, ROI) %>%
+  summarise(meanprice = mean(price),
+            mean_down_payment = mean(down_payment),
+            mean_mortgage = mean(projected_mortgage_yr),
+            mean_rent_income = mean(projected_rental_income_yr),
+            mean_ROI = mean(ROI))
+
+pander(boston_single_table)
+```
+
+From this table we can see that the mean price for these types of homes in Boston is $3,564,582 which is a lot of money. Additionally, the mean ROI on these homes is 1.04% which is not a very good return. That being said, In the previous plot there are some properties with much higher returns. They may just be more difficult to find in the Boston area. 
+

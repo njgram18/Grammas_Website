@@ -1,0 +1,77 @@
+---
+title: "Brooklyn Analysis"
+author: "Nick Grammas"
+date: 2020-12-01T21:13:14-05:00
+categories: ["R"]
+tags: ["R Markdown", "plot", "regression"]
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Introduction:
+
+In this section I look at the borough Brooklyn. In this analysis I have created plots that look at square feet vs price, down return vs sale price, sale price vs projected rental income, and projected mortgage payments vs ROI.
+
+```{r echo=FALSE, message=FALSE, results = 'hide'}
+library(tidyverse)
+library(here)
+nyc_properties <- read_csv(here("Data/NYC_property_sales.csv"))
+brooklyn_properties <- nyc_properties %>% filter(borough == "Brooklyn")
+```
+
+```{r}
+brooklyn_analysis <- brooklyn_properties %>%
+  mutate(avg_price = sum(sale_price) / 10888) %>%
+  mutate(projected_rental_income = gross_square_feet * 1.97) %>%
+  mutate(down_payment = sale_price * .20) %>%
+  mutate(principal = sale_price - down_payment) %>%
+  mutate(projected_mortgage_payment = ((principal/330) * 1.042)) %>%
+  mutate(projected_mortgage_yr = projected_mortgage_payment * 12) %>%
+  mutate(projected_rental_income_yr = (projected_rental_income * 12)) %>%
+  mutate(ROI = (projected_rental_income_yr - projected_mortgage_yr) / projected_mortgage_yr) %>%
+  mutate(down_return = projected_rental_income_yr / down_payment * 100)
+```
+```{r echo=FALSE, message=FALSE, results = 'hide'}
+library(plotly)
+```
+
+Square Feet Vs Price:
+
+```{r}
+plot1 <- ggplot(data = brooklyn_analysis, aes(x = gross_square_feet, y = sale_price, 
+                                               label = address)) +
+  geom_point() +
+  geom_smooth()
+
+ggplotly(plot1, tooltip = 'label')
+```
+
+This plot is very similar to the other New York City boroughs that have been displayed. Generally, as the square footage increases the price tends to increase. Also, most of the properties tend to be in the lower left side of the plot. However, there seems to be more of a spread among the properties than in other boroughs. Also, there seems to be many more properties that fall below the trend line.
+
+Down Return Vs Price:
+
+```{r}
+plot2 <- ggplot(data = brooklyn_analysis, aes(x = down_return, y = sale_price, 
+                                               label = address)) +
+  geom_point() +
+  geom_smooth()
+
+ggplotly(plot2, tooltip = 'label')
+```
+
+The trend line in this plot is also very similar to what has been seen in the other boroughs in this analysis, however, it seems that many of the lower priced properties have much higher down return rate in this borough. This is similar to Queens plot, but there seems to many more lower priced properties receiving higher down return rates than in that borough. Once again, these are good properties to look into for someone trying to get their own personal investment back quickly. 
+
+Sale Price Vs Projected Rental Income
+
+```{r}
+plot3 <- ggplot(data = brooklyn_analysis, aes(x = sale_price, y = projected_rental_income_yr, 
+                                               label = address)) +
+  geom_point() +
+  geom_smooth()
+
+ggplotly(plot3, tooltip = 'label')
+```
+
+This plot shows that as the sale price increases the projected rental income tends to increase as well. This is a similar trend to the other plots in this project, however, Brooklyn properties seem to much more spread out on this plot suggesting that there is more variability than other boroughs. 

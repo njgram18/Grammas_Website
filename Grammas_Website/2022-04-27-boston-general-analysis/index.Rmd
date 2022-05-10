@@ -1,0 +1,8 @@
+---
+title: Boston General Analysis
+author: Nick Grammas
+date: '2022-04-27'
+slug: boston-general-analysis
+categories: []
+tags: []
+---

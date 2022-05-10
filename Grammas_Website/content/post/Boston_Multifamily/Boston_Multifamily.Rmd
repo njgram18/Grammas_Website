@@ -1,0 +1,103 @@
+---
+title: "Boston Multifamily Analysis"
+author: "Nick Grammas"
+date: 2020-12-01T21:13:14-05:00
+categories: ["R"]
+tags: ["R Markdown", "plot", "regression"]
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r echo=FALSE, message=FALSE, results = 'hide'}
+library(tidyverse)
+library(here)
+boston_original_df <- read_csv(here("Data/zillow-boston.csv"))
+##view(boston_original_df)
+boston_MA_df <- boston_original_df %>% filter(rstate == "MA")
+boston_MA_df <- boston_MA_df %>% arrange(desc(price))
+##view(boston_MA_df)
+```
+
+Introduction:
+
+In this section of I take a deep look at the multifamily properties that are in the Boston data set. I will look at the relationship between living space and price, projected rental income and price, ROI and projected mortgage costs per year, and the price vs the down return rate. All the plots in this section are interactive plots that allow the user to hover over points to identify the address of the property. 
+
+
+```{r}
+boston_add_df <- boston_MA_df %>% mutate(cap_rate = 6915/price) %>%
+  filter(!is.na(bedroom_number)) %>% mutate(price_per_bedroom = price/bedroom_number)
+```
+
+
+
+```{r}
+boston_multifamily <- boston_add_df %>% filter(property_type == "MULTI_FAMILY") %>%
+  mutate(avg_price = sum(price) / 38) %>%
+  mutate(projected_rental_income = living_space * 4.50) %>%
+  mutate(down_payment = price * .20) %>%
+  mutate(principal = price - down_payment) %>%
+  mutate(projected_mortgage_payment = ((principal/330) * 1.042)) %>%
+  mutate(projected_mortgage_yr = projected_mortgage_payment * 12) %>%
+  mutate(projected_rental_income_yr = (projected_rental_income * 12)) %>%
+  mutate(ROI = (projected_rental_income_yr - projected_mortgage_yr) / projected_mortgage_yr) %>%
+  mutate(down_return = projected_rental_income_yr/down_payment * 100)
+```
+
+Living Space Vs Price:
+
+```{r echo=FALSE, message=FALSE, results = 'hide'}
+library(plotly)
+```
+```{r}
+plot1 <- ggplot(data = boston_multifamily, aes(x = living_space, y = price, 
+                                               label = address)) +
+  geom_point() +
+  geom_smooth()
+
+ggplotly(plot1, tooltip = 'label')
+```
+
+It can be seen that the relationship between living space and price is upward sloping. This is not that surprising because larger properties tend to cost more in general. However, the additional living space in terms of multifamily homes also could mean more income producing units. This could lead to higher prices as well. 
+
+Price vs Projected Rental Income:
+
+```{r}
+plot2 <- ggplot(data = boston_multifamily, aes(x = price, y = projected_rental_income, 
+                                               label = address)) +
+  geom_point() +
+  geom_smooth()
+ggplotly(plot2, tooltip = 'label')
+```
+
+This relationship shows that as price increases the projected rental income tends to increase. The projected rental income variable was calculated by multiplying living space by $4.50 (the average rent per square foot in Boston). Based off of the relationship that was seen in the prior plot, this may not come as a surprise because the as living space increased the price tended to increase. Once again, this may not be the case because the increase in rental income could also be due to more rental units in the property.
+
+Projected Mortgage Payments vs ROI:
+
+```{r}
+plot3 <- ggplot(data = boston_multifamily, aes(x = projected_mortgage_yr, y = ROI, 
+                                               label = address)) +
+  geom_point() +
+  geom_smooth()
+ggplotly(plot3, tooltip = 'label')
+```
+
+In investing, there is a cost associated with everything, but it is important to understand the relationship between the costs of an investment and the return on that investment. This plot explores that relationship and it can be seen that there is a somewhat negative relationship between the cost of a mortgage throughout the year and the ROI. It can be seen that most of the returns on these properties are have under a 4% return on the investment, however, there are few properties that have ROI's above the 4% mark and that are relatively cheap for city properties.
+
+
+Price vs Down Return Rate:
+
+```{r}
+library(plotly)
+plot4 <- ggplot(data = boston_multifamily, aes(x = price, y = down_return, 
+                                               label = address)) +
+  geom_point() +
+  geom_smooth()
+
+ggplotly(plot4, tooltip = 'label')
+```
+
+This plot shows the relationship between the prices of properties and the down return rate. The down return rate is a measure of how quickly an investor can get their down payment back. The plot shows that a negative relationship between the price of a property and the down return rate. This relationship could show that it may be more difficult to increase the prices of rents on larger investments in Boston. Therefore, these larger properties that cost more would have to be longer investments for landlords and real estate investors. 
+

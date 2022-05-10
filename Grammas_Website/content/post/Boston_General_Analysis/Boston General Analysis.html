@@ -1,0 +1,147 @@
+<script src="Boston General Analysis_files/header-attrs/header-attrs.js"></script>
+
+
+<pre class="r"><code>library(tidyverse)</code></pre>
+<pre><code>## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.1 ──</code></pre>
+<pre><code>## ✓ ggplot2 3.3.5     ✓ purrr   0.3.4
+## ✓ tibble  3.1.5     ✓ dplyr   1.0.7
+## ✓ tidyr   1.1.4     ✓ stringr 1.4.0
+## ✓ readr   2.0.2     ✓ forcats 0.5.1</code></pre>
+<pre><code>## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()</code></pre>
+<pre class="r"><code>library(here)</code></pre>
+<pre><code>## here() starts at /Users/nickgrammas/Desktop/website_setup/Grammas_Website</code></pre>
+<pre class="r"><code>boston_original_df &lt;- read_csv(here(&quot;Data/zillow-boston.csv&quot;))</code></pre>
+<pre><code>## Rows: 836 Columns: 20</code></pre>
+<pre><code>## ── Column specification ────────────────────────────────────────────────────────
+## Delimiter: &quot;,&quot;
+## chr   (8): address, street_name, city, rstate, postcode, property_type, prop...
+## dbl  (11): property_id, latitude, longitude, price, zestimate, bedroom_numbe...
+## dttm  (1): RunDate</code></pre>
+<pre><code>## 
+## ℹ Use `spec()` to retrieve the full column specification for this data.
+## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<pre class="r"><code>##view(boston_original_df)
+boston_MA_df &lt;- boston_original_df %&gt;% filter(rstate == &quot;MA&quot;)
+boston_MA_df &lt;- boston_MA_df %&gt;% arrange(desc(price))
+##view(boston_MA_df)
+boston_MA_df</code></pre>
+<pre><code>## # A tibble: 780 × 20
+##    property_id address     street_name  city  rstate latitude longitude postcode
+##          &lt;dbl&gt; &lt;chr&gt;       &lt;chr&gt;        &lt;chr&gt; &lt;chr&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;chr&gt;   
+##  1    59166243 30 Chestnu… Chestnut St  Bost… MA         42.4     -71.1 02108   
+##  2  2107626553 63 Mount V… Mount Verno… Bost… MA         42.4     -71.1 02108   
+##  3    59166308 17 Louisbu… Louisburg Sq Bost… MA         42.4     -71.1 02108   
+##  4  2117794141 318 Beacon… Beacon St    Bost… MA         42.4     -71.1 02116   
+##  5   333605731 1 Dalton S… Dalton St #… Bost… MA         42.3     -71.1 02115   
+##  6    90141410 776 Boylst… Boylston St… Bost… MA         42.3     -71.1 02199   
+##  7    59163970 10 Rowes W… Rowes Wharf… Bost… MA         42.4     -71.1 02110   
+##  8    90141331 776 Boylst… Boylston St… Bost… MA         42.3     -71.1 02199   
+##  9    61319917 2 Avery St… Avery St AP… Bost… MA         42.4     -71.1 02111   
+## 10  2075168741 2 Avery St… Avery St AP… Bost… MA         NA        NA   02111   
+## # … with 770 more rows, and 12 more variables: price &lt;dbl&gt;, zestimate &lt;dbl&gt;,
+## #   bedroom_number &lt;dbl&gt;, bathroom_number &lt;dbl&gt;, price_per_unit &lt;dbl&gt;,
+## #   living_space &lt;dbl&gt;, land_space &lt;dbl&gt;, property_type &lt;chr&gt;,
+## #   property_status &lt;chr&gt;, agency_name &lt;chr&gt;, zillow_owned &lt;dbl&gt;,
+## #   RunDate &lt;dttm&gt;</code></pre>
+<pre class="r"><code>boston_general &lt;- boston_MA_df %&gt;%
+  mutate(avg_price = sum(price) / 780) %&gt;%
+  mutate(projected_rental_income = living_space * 4.50) %&gt;%
+  mutate(down_payment = price * .20) %&gt;%
+  mutate(principal = price - down_payment) %&gt;%
+  mutate(projected_mortgage_payment = ((principal/330) * 1.042)) %&gt;%
+  mutate(projected_mortgage_yr = projected_mortgage_payment * 12) %&gt;%
+  mutate(projected_rental_income_yr = (projected_rental_income * 12)) %&gt;%
+  mutate(ROI = (projected_rental_income_yr - projected_mortgage_yr) / projected_mortgage_yr)
+
+boston_general</code></pre>
+<pre><code>## # A tibble: 780 × 28
+##    property_id address     street_name  city  rstate latitude longitude postcode
+##          &lt;dbl&gt; &lt;chr&gt;       &lt;chr&gt;        &lt;chr&gt; &lt;chr&gt;     &lt;dbl&gt;     &lt;dbl&gt; &lt;chr&gt;   
+##  1    59166243 30 Chestnu… Chestnut St  Bost… MA         42.4     -71.1 02108   
+##  2  2107626553 63 Mount V… Mount Verno… Bost… MA         42.4     -71.1 02108   
+##  3    59166308 17 Louisbu… Louisburg Sq Bost… MA         42.4     -71.1 02108   
+##  4  2117794141 318 Beacon… Beacon St    Bost… MA         42.4     -71.1 02116   
+##  5   333605731 1 Dalton S… Dalton St #… Bost… MA         42.3     -71.1 02115   
+##  6    90141410 776 Boylst… Boylston St… Bost… MA         42.3     -71.1 02199   
+##  7    59163970 10 Rowes W… Rowes Wharf… Bost… MA         42.4     -71.1 02110   
+##  8    90141331 776 Boylst… Boylston St… Bost… MA         42.3     -71.1 02199   
+##  9    61319917 2 Avery St… Avery St AP… Bost… MA         42.4     -71.1 02111   
+## 10  2075168741 2 Avery St… Avery St AP… Bost… MA         NA        NA   02111   
+## # … with 770 more rows, and 20 more variables: price &lt;dbl&gt;, zestimate &lt;dbl&gt;,
+## #   bedroom_number &lt;dbl&gt;, bathroom_number &lt;dbl&gt;, price_per_unit &lt;dbl&gt;,
+## #   living_space &lt;dbl&gt;, land_space &lt;dbl&gt;, property_type &lt;chr&gt;,
+## #   property_status &lt;chr&gt;, agency_name &lt;chr&gt;, zillow_owned &lt;dbl&gt;,
+## #   RunDate &lt;dttm&gt;, avg_price &lt;dbl&gt;, projected_rental_income &lt;dbl&gt;,
+## #   down_payment &lt;dbl&gt;, principal &lt;dbl&gt;, projected_mortgage_payment &lt;dbl&gt;,
+## #   projected_mortgage_yr &lt;dbl&gt;, projected_rental_income_yr &lt;dbl&gt;, ROI &lt;dbl&gt;</code></pre>
+<pre class="r"><code>boston_general_price &lt;- boston_general %&gt;%
+  filter(property_type == &quot;CONDO&quot; |
+           property_type == &quot;SINGLE_FAMILY&quot; |
+           property_type == &quot;MULTI_FAMILY&quot;) %&gt;%
+  group_by(property_type) %&gt;%
+  summarise(mean_price = mean(price),
+            sd_price = sd(price),
+            n_properties = n()) %&gt;%
+    mutate(l_se = mean_price - sd_price / sqrt(n_properties),
+         u_se = mean_price + sd_price / sqrt(n_properties)) %&gt;%
+  mutate(type = fct_reorder(property_type, mean_price))
+boston_general_price</code></pre>
+<pre><code>## # A tibble: 3 × 7
+##   property_type mean_price sd_price n_properties     l_se     u_se type         
+##   &lt;chr&gt;              &lt;dbl&gt;    &lt;dbl&gt;        &lt;int&gt;    &lt;dbl&gt;    &lt;dbl&gt; &lt;fct&gt;        
+## 1 CONDO           1780159. 1859497.          677 1708693. 1851625. CONDO        
+## 2 MULTI_FAMILY    3042212. 2343776.           39 2666908. 3417517. MULTI_FAMILY 
+## 3 SINGLE_FAMILY   3564582. 3572621.           51 3064315. 4064849. SINGLE_FAMILY</code></pre>
+<pre class="r"><code>ggplot(data = boston_general_price, aes(x = property_type, y = mean_price)) + 
+  geom_col() +
+  coord_flip()</code></pre>
+<p><img src="/post/Boston_General_Analysis/Boston%20General%20Analysis_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<pre class="r"><code>ggplot(data = boston_general_price, aes(x = property_type, y = mean_price)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = l_se, ymax = u_se)) +
+  coord_flip()</code></pre>
+<p><img src="/post/Boston_General_Analysis/Boston%20General%20Analysis_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<pre class="r"><code>boston_general_rent &lt;- boston_general %&gt;%
+  filter(property_type == &quot;CONDO&quot; |
+           property_type == &quot;SINGLE_FAMILY&quot; |
+           property_type == &quot;MULTI_FAMILY&quot;) %&gt;%
+  group_by(property_type) %&gt;%
+  summarise(mean_rent = mean(projected_rental_income_yr),
+            sd_rent = sd(projected_rental_income_yr),
+            n_properties = n()) %&gt;%
+    mutate(l_se = mean_rent - sd_rent / sqrt(n_properties),
+         u_se = mean_rent + sd_rent / sqrt(n_properties)) %&gt;%
+  mutate(type = fct_reorder(.f = property_type, .x = mean_rent))
+
+ggplot(data = boston_general_rent, aes(x = type, y = mean_rent)) + 
+  geom_col() +
+  coord_flip()</code></pre>
+<p><img src="/post/Boston_General_Analysis/Boston%20General%20Analysis_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<pre class="r"><code>ggplot(data = boston_general_rent, aes(x = type, y = mean_rent)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = l_se, ymax = u_se)) +
+  coord_flip()</code></pre>
+<p><img src="/post/Boston_General_Analysis/Boston%20General%20Analysis_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<pre class="r"><code>boston_general_roi &lt;- boston_general %&gt;%
+  filter(property_type == &quot;CONDO&quot; |
+           property_type == &quot;SINGLE_FAMILY&quot; |
+           property_type == &quot;MULTI_FAMILY&quot;) %&gt;%
+  group_by(property_type) %&gt;%
+  summarise(mean_ROI = mean(ROI),
+            sd_ROI = sd(ROI),
+            n_properties = n()) %&gt;%
+    mutate(l_se = mean_ROI - sd_ROI / sqrt(n_properties),
+         u_se = mean_ROI + sd_ROI / sqrt(n_properties)) %&gt;%
+  mutate(type = fct_reorder(property_type, mean_ROI))
+
+ggplot(data = boston_general_roi, aes(x = type, y = mean_ROI)) + 
+  geom_col() +
+  coord_flip()</code></pre>
+<p><img src="/post/Boston_General_Analysis/Boston%20General%20Analysis_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<pre class="r"><code>ggplot(data = boston_general_roi, aes(x = type, y = mean_ROI)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = l_se, ymax = u_se)) +
+  coord_flip()</code></pre>
+<p><img src="/post/Boston_General_Analysis/Boston%20General%20Analysis_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>

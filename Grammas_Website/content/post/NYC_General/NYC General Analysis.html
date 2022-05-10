@@ -1,0 +1,79 @@
+<script src="NYC General Analysis_files/header-attrs/header-attrs.js"></script>
+
+
+<p>Introduction:</p>
+<p>Unlike the Boston data set, I was unable to separate the properties available for sale by the property type because the NYC Building Code has many different property types. Therefore, I split the city up into each borough, which is actually shows the differences of each borough and just how large NYC really is. In this section I look at some important investment statistics for real estate analysis and compare the results to each borough. The plots in this section show the mean of each of these statistics and the variability of within each borough. In other sections, I take a closer look at each borough to get a better picture of the real estate environment across the city.</p>
+<pre class="r"><code>nyc_general &lt;- NYC_df %&gt;%
+  mutate(avg_price = sum(sale_price) / 38177) %&gt;%
+  mutate(projected_rental_income = gross_square_feet * 2.01) %&gt;%
+  mutate(down_payment = sale_price * .20) %&gt;%
+  mutate(principal = sale_price - down_payment) %&gt;%
+  mutate(projected_mortgage_payment = ((principal/330) * 1.042)) %&gt;%
+  mutate(projected_mortgage_yr = projected_mortgage_payment * 12) %&gt;%
+  mutate(projected_rental_income_yr = (projected_rental_income * 12)) %&gt;%
+  mutate(ROI = (projected_rental_income_yr - projected_mortgage_yr) / projected_mortgage_yr)</code></pre>
+<p>Mean Price:</p>
+<pre class="r"><code>nyc_general_price &lt;- nyc_general %&gt;%
+  group_by(borough) %&gt;%
+  summarise(mean_price = mean(sale_price),
+            sd_price = sd(sale_price),
+            n_properties = n()) %&gt;%
+    mutate(l_se = mean_price - sd_price / sqrt(n_properties),
+         u_se = mean_price + sd_price / sqrt(n_properties)) %&gt;%
+  mutate(borough_2 = fct_reorder(borough, mean_price))
+ggplot(data = nyc_general_price, aes(x = borough_2, y = mean_price, color = borough, fill = borough)) + 
+  geom_col() +
+  coord_flip()</code></pre>
+<p><img src="/post/NYC_General/NYC%20General%20Analysis_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<p>In this plot you can see that the mean price for properties in Manhattan is far more expensive than any other borough in New York City. In fact, it is more than $6 million more than the average price of the next most expensive borough, Brooklyn. That being said, the other boroughs are fairly close to each other in mean price, but Staten Island is has a much lower mean price than the all other boroughs.</p>
+<p>Mean Price with Variability:</p>
+<pre class="r"><code>ggplot(data = nyc_general_price, aes(x = borough_2, y = mean_price, color = borough)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = l_se, ymax = u_se)) +
+  coord_flip()</code></pre>
+<p><img src="/post/NYC_General/NYC%20General%20Analysis_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p>In this plot we see that Manhattan has the most variability in property prices compared to the other boroughs. In fact, the other boroughs have far less variability and hover right around the mean property price for the area.</p>
+<p>Mean Rent:</p>
+<pre class="r"><code>nyc_general_rent &lt;- nyc_general %&gt;%
+  group_by(borough) %&gt;%
+  summarise(mean_rent = mean(projected_rental_income_yr),
+            sd_rent = sd(projected_rental_income_yr),
+            n_properties = n()) %&gt;%
+    mutate(l_se = mean_rent - sd_rent / sqrt(n_properties),
+         u_se = mean_rent + sd_rent / sqrt(n_properties)) %&gt;%
+  mutate(borough_2 = fct_reorder(.f = borough, .x = mean_rent))
+
+ggplot(data = nyc_general_rent, aes(x = borough_2, y = mean_rent, colour = borough, fill = borough)) + 
+  geom_col() +
+  coord_flip()</code></pre>
+<p><img src="/post/NYC_General/NYC%20General%20Analysis_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>Similar to the prior plot, Manhattan also has the highest mean rent compared to the other boroughs in New York. The Bronx comes in as the second highest mean rent, and is approximately half of the mean Manhattan rent. This may be an early indication that the Bronx may be a good spot for real estate investors to invest in. Finally, Queens and Staten Island are both again at the bottom of the chart once again. A quick note that the rents were created by taking the average rent per square foot for each neighborhood in each of these boroughs.</p>
+<p>Mean Rent with Variability:</p>
+<pre class="r"><code>ggplot(data = nyc_general_rent, aes(x = borough_2, y = mean_rent, colour = borough)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = l_se, ymax = u_se)) +
+  coord_flip()</code></pre>
+<p><img src="/post/NYC_General/NYC%20General%20Analysis_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>Once again Manhattan has the most variability in rents compared to the rest of the boroughs. However, unlike the mean price of properties the Bronx and Queens have much more variability in their rents. Additionally, Brooklyn and Staten Island both have very small variability in their rents.</p>
+<p>Mean ROI:</p>
+<pre class="r"><code>nyc_general_roi &lt;- nyc_general %&gt;%
+  group_by(borough) %&gt;%
+  summarise(mean_ROI = mean(ROI),
+            sd_ROI = sd(ROI),
+            n_properties = n()) %&gt;%
+    mutate(l_se = mean_ROI - sd_ROI / sqrt(n_properties),
+         u_se = mean_ROI + sd_ROI / sqrt(n_properties)) %&gt;%
+  mutate(borough_2 = fct_reorder(borough, mean_ROI))
+
+ggplot(data = nyc_general_roi, aes(x = borough_2, y = mean_ROI, colour = borough, fill = borough)) + 
+  geom_col() +
+  coord_flip()</code></pre>
+<p><img src="/post/NYC_General/NYC%20General%20Analysis_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<p>The borough with the highest return on investment is Manhattan, but the Bronx are not far behind. That being said, the two top mean ROI’s are not very high at just under 3%. Queens has the worst mean ROI at just under 1.5%.</p>
+<p>Mean ROI with Variability:</p>
+<pre class="r"><code>ggplot(data = nyc_general_roi, aes(x = borough_2, y = mean_ROI, colour = borough)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = l_se, ymax = u_se)) +
+  coord_flip()</code></pre>
+<p><img src="/post/NYC_General/NYC%20General%20Analysis_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p>As you can see in this plot, despite having the highest mean ROI, Manhattan has a massive amount of variability compared to the other boroughs in the city. This could be due to the fact that some of the neighborhoods within the city have much higher property prices than others. Additionally, it can be seen that across all boroughs there is a decent amount of variability in ROI, suggesting that each borough may have some good and bad deals.</p>

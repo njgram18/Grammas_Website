@@ -1,0 +1,86 @@
+---
+title: "Queens Analysis"
+author: "Nick Grammas"
+date: 2020-12-01T21:13:14-05:00
+categories: ["R"]
+tags: ["R Markdown", "plot", "regression"]
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Introduction:
+
+In this section I look at the borough Queens. In this analysis I have created plots that look at square feet vs price, down return vs sale price, sale price vs projected rental income, and projected mortgage payments vs ROI. 
+
+```{r echo=FALSE, message=FALSE, results = 'hide'}
+library(tidyverse)
+library(here)
+nyc_properties <- read_csv(here("Data/NYC_property_sales.csv"))
+queens_properties <- nyc_properties %>% filter(borough == "Queens")
+```
+
+```{r}
+queens_analysis <- queens_properties %>%
+  mutate(avg_price = sum(sale_price) / 11955) %>%
+  mutate(projected_rental_income = gross_square_feet * 1.62) %>%
+  mutate(down_payment = sale_price * .20) %>%
+  mutate(principal = sale_price - down_payment) %>%
+  mutate(projected_mortgage_payment = ((principal/330) * 1.042)) %>%
+  mutate(projected_mortgage_yr = projected_mortgage_payment * 12) %>%
+  mutate(projected_rental_income_yr = (projected_rental_income * 12)) %>%
+  mutate(ROI = (projected_rental_income_yr - projected_mortgage_yr) / projected_mortgage_yr) %>%
+  mutate(down_return = projected_rental_income_yr / down_payment * 100)
+```
+
+```{r echo=FALSE, message=FALSE, results = 'hide'}
+library(plotly)
+```
+```{r}
+plot1 <- ggplot(data = queens_analysis, aes(x = gross_square_feet, y = sale_price, 
+                                               label = address)) +
+  geom_point() +
+  geom_smooth()
+
+ggplotly(plot1, tooltip = 'label')
+```
+
+In this plot we see that the relationship between square feet and price tends to increase as square feet increases. Most of the properties in Queens tend to be in the bottom left corner of the plot, but there are few properties that are removed from this grouping. Specifically, there is one massive property that that is also the most expensive in the Queens borough. 
+
+
+Down Return Vs Price
+
+```{r}
+plot2 <- ggplot(data = queens_analysis, aes(x = down_return, y = sale_price, 
+                                               label = address)) +
+  geom_point() +
+  geom_smooth()
+
+ggplotly(plot2, tooltip = 'label')
+```
+
+The trend between down return rate and price is very similar to the Staten Island trend line, but there seems to be more properties near the y-axis of the plot, suggesting that more of the properties in the Queens borough have a more difficult time of getting the down payment back. That being said, there is a decent amount of properties that receive really large down return rates which would be great properties to look into. Many of those properties seem to have a down return rate around 1000% percent, which is far more than the initial down payment.
+
+Sale Price Vs Projected Rental Income:
+
+```{r}
+plot3 <- ggplot(data = queens_analysis, aes(x = sale_price, y = projected_rental_income_yr, 
+                                               label = address)) +
+  geom_point() +
+  geom_smooth()
+ggplotly(plot3, tooltip = 'label')
+```
+This plot shows that as sale prices increase the projected rental income tends to increase as well. Additionally, the trend line suggests that as the sale price reaches even higher prices the rental income tends to increase at a faster rate. That being said, there are many properties on the lower range of prices that projected rental incomes above the trend line. 
+
+Projected Mortgage Payments Vs ROI:
+
+```{r}
+plot4 <- ggplot(data = queens_analysis, aes(x = projected_mortgage_yr, y = ROI, 
+                                               label = address)) +
+  geom_point() +
+  geom_smooth()
+ggplotly(plot4, tooltip = 'label') 
+```
+
+This plot shows that properties in Queens with lower mortgage payments tend to have much higher returns on their investments. On the other side, properties with higher mortgages, and therefore more expensive properties, tend to have much lower returns. That being said, it might be a safer bet for an investor to take a mortgage out on smaller deals in this borough, and generate larger amounts of cash for cash deals on the properties. 
